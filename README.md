@@ -3,6 +3,7 @@
 ## 🚀 Overview
 A full-stack, AI-powered inventory management and analytics solution for SKU mapping, sales data cleaning, dashboarding, and natural language analytics.
 
+UX Designs = [https://docs.google.com/document/d/1hGk2jaycw0RMSKKuB3XmUnB2JegFYZrqz1e8c6UdtXM/edit?usp=sharing](https://docs.google.com/document/d/1hGk2jaycw0RMSKKuB3XmUnB2JegFYZrqz1e8c6UdtXM/edit?usp=sharing)
 ---
 ## 🛠️ Tech Stack
 - **Frontend:** React (with drag-and-drop uploader, authentication, AI chat widget)
