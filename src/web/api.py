@@ -8,9 +8,46 @@ import tempfile
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import google.generativeai as genai
+import requests
+from pydantic import BaseModel
+import json
+from pathlib import Path
+
+# Initialize FastAPI app
+app = FastAPI()
+
+# Allow CORS for local frontend development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 security = HTTPBasic()
-USERS = {"admin@example.com": "password123"}
+
+# User data model
+class UserSignup(BaseModel):
+    email: str
+    password: str
+    full_name: str
+
+# File to store users
+USERS_FILE = "users.json"
+
+def load_users():
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_users(users):
+    with open(USERS_FILE, 'w') as f:
+        json.dump(users, f, indent=2)
+
+# Initialize users from file
+USERS = load_users()
 
 def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
     if USERS.get(credentials.username) == credentials.password:
@@ -25,16 +62,20 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
 def login(credentials: HTTPBasicCredentials = Depends(security)):
     return {"message": "Login successful"}
 
-app = FastAPI()
-
-# Allow CORS for local frontend development
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+@app.post("/signup/")
+async def signup(user_data: UserSignup):
+    # Check if user already exists
+    if user_data.email in USERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Add new user
+    USERS[user_data.email] = user_data.password
+    save_users(USERS)
+    
+    return {"message": "Registration successful"}
 
 BASEROW_API_URL = "https://api.baserow.io/api/database/rows/table/{table_id}/?user_field_names=true"
 BASEROW_API_TOKEN = "lQerNXuevv64EPuDnbnrAbPBe3hI16wC"
@@ -44,10 +85,6 @@ def push_to_baserow(table_id, records):
     headers = {"Authorization": f"Token {BASEROW_API_TOKEN}"}
     for record in records:
         requests.post(url, json=record, headers=headers)
-
-# In your upload_sales_data endpoint, after cleaning:
-table_id = 531652  # from your URL
-push_to_baserow(table_id, cleaned_df.to_dict(orient="records"))
 
 # Load mapping file once (can be improved for dynamic mapping uploads)
 MAPPING_FILE = os.getenv("MAPPING_FILE", "data/sample_mapping.csv")
@@ -71,6 +108,11 @@ async def upload_sales_data(file: UploadFile = File(...), user: str = Depends(au
         # Map SKUs to MSKUs
         cleaned_df = sku_mapper.process_inventory_data(df)
         errors = sku_mapper.get_error_log()
+        
+        # Push to Baserow
+        table_id = 531652  # from your URL
+        push_to_baserow(table_id, cleaned_df.to_dict(orient="records"))
+        
         # Return cleaned data and errors as JSON
         return JSONResponse({
             "cleaned_data": cleaned_df.to_dict(orient="records"),
@@ -86,18 +128,22 @@ genai.configure(api_key="AIzaSyCum2QctzqCOtfEkuavUoFYhdrXAAKfUA0")
 async def ai_query(
     question: str = Body(..., embed=True)
 ):
-    # Prompt Gemini to generate SQL
-    prompt = f"You are a data analyst. Convert this question to SQL for a PostgreSQL/Baserow database: {question}"
-    response = genai.chat(
-        model="gemini-2.0-flash",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    sql = response.last.text.strip()
-    # (Optional) Log the generated SQL
-
-    # Execute SQL against your database (example for Baserow/Postgres)
-    # You may need to use SQLAlchemy or psycopg2 for direct DB access
-    # For Baserow, use their API to fetch data and filter in Python
-
-    # For demo, just return the SQL
-    return {"sql": sql, "result": "Query execution not implemented in this demo."} 
+    try:
+        # Initialize the Gemini model
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        
+        # Create the prompt
+        prompt = f"You are a data analyst. Convert this question to SQL for a PostgreSQL/Baserow database: {question}"
+        
+        # Generate response
+        response = model.generate_content(prompt)
+        
+        # Extract the SQL from the response
+        sql = response.text.strip()
+        
+        return {"sql": sql, "result": "Query execution not implemented in this demo."}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating SQL: {str(e)}"
+        ) 
