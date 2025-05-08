@@ -98,20 +98,6 @@ npm start
 
 ---
 
-## 🧪 Testing
-- Unit tests for core mapping logic are in `tests/`
-- To run tests:
-  ```bash
-  pytest
-  ```
-
----
-
-## 📦 Deployment
-- Dockerfile and cloud deployment instructions coming soon!
-
----
-
 ## 📚 References
 - [Baserow Docs](https://baserow.io/docs/)
 - [Gemini AI API](https://ai.google.dev/)
