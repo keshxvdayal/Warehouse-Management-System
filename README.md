@@ -4,21 +4,6 @@
 A full-stack, AI-powered inventory management and analytics solution for SKU mapping, sales data cleaning, dashboarding, and natural language analytics.
 
 ---
-
-## 🏗️ Architecture Diagram
-
-```mermaid
-graph TD
-    A[Frontend (React)] -- Uploads Data, Chat --> B[Backend (FastAPI)]
-    B -- SKU Mapping, Logging --> C[SKU Mapper (Python)]
-    B -- Pushes Cleaned Data --> D[Baserow (No-Code DB)]
-    B -- AI Query (Gemini) --> E[Gemini AI API]
-    D -- Dashboard Embed --> A
-    D -- API --> B
-```
-
----
-
 ## 🛠️ Tech Stack
 - **Frontend:** React (with drag-and-drop uploader, authentication, AI chat widget)
 - **Backend:** FastAPI (Python 3.9+)
