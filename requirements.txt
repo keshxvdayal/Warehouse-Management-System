@@ -1,0 +1,31 @@
+# Core dependencies
+numpy>=1.24.3
+pandas>=2.0.0
+openpyxl>=3.1.2
+python-dotenv>=1.0.0
+
+# GUI and Web
+PyQt5>=5.15.9
+streamlit>=1.31.0
+fastapi>=0.109.0
+uvicorn>=0.27.0
+python-multipart>=0.0.6
+
+# Data Visualization
+plotly>=5.18.0
+altair>=5.2.0
+
+# Database
+sqlalchemy>=2.0.25
+alembic>=1.13.1
+psycopg2-binary>=2.9.9
+
+# AI and NLP
+openai>=1.12.0
+langchain>=0.1.0
+sqlalchemy-ai>=0.1.0
+
+# Testing and Development
+pytest>=7.4.0
+black>=23.7.0
+flake8>=6.1.0 
